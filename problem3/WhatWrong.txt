@@ -1,0 +1,29 @@
+What’s wrong and why
+
+1) Weak/incorrect typing
+- getPriority(blockchain: any) uses any.
+- WalletBalance lacks a blockchain field but the code reads balance.blockchain.
+- prices is used as a dictionary but untyped.
+- Props extends BoxProps is declared but children is unused.
+
+2) Buggy filter/sort logic
+- lhsPriority is referenced but never defined.
+- Filter returns true only when amount <= 0 and priority > -99 → keeps empty balances and drops real ones.
+- Comparator doesn’t return 0 for equal priority.
+- sort runs inside useMemo but the comparator is asymmetrical and may return undefined.
+
+3) Misuse of hooks / unnecessary deps
+- useMemo depends on prices though it’s not used, causing needless re-renders.
+- getPriority is recreated every render; better as a module-level constant map.
+
+4) Data shape mismatches
+- formattedBalances produces formatted, but rows maps over sortedBalances and then reads balance.formatted, which doesn’t exist there.
+
+5) Rendering inefficiencies / anti-patterns
+- key={index} leads to unstable reconciliation; use a stable, domain key.
+- toFixed() without digits forces integer rounding and returns a string; precision likely wrong for money.
+- Spreads ...rest onto a div that may receive non-DOM props from BoxProps.
+
+6) Other correctness/robustness issues
+- Potential prices[balance.currency] undefined → NaN usdValue.
+- classes.row is referenced but not defined in the snippet.

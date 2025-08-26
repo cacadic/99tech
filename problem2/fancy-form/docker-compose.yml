@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  fancy-form:
+    build: .
+    image: linhpham92/99tech:latest
+    container_name: fancy-form
+    ports:
+      - "5173:5173"
+    restart: unless-stopped
+    platform: linux/amd64

@@ -1,0 +1,9 @@
+{
+  "swap": "Chuyển Đổi Coin",
+  "amount_to_send": "Số lượng Gửi",
+  "amount_to_receive": "Số lượng Nhận",
+  "value": "Giá Trị",
+  "confirm_swap": "Xác Nhận Chuyển Đổi",
+  "max": "Tối Đa",
+  "swap_success": "Chuyển Đổi Thành Công"
+}

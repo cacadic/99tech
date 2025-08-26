@@ -1,0 +1,69 @@
+import { type JSX } from "react"
+
+import BLURIcon from "@/shared/assets/tokens/BLUR.svg?react"
+import BNEOIcon from "@/shared/assets/tokens/bNEO.svg?react"
+import BUSDIcon from "@/shared/assets/tokens/BUSD.svg?react"
+import USDIcon from "@/shared/assets/tokens/USD.svg?react"
+import ETHIcon from "@/shared/assets/tokens/ETH.svg?react"
+import GMXIcon from "@/shared/assets/tokens/GMX.svg?react"
+import STEVMOSIcon from "@/shared/assets/tokens/stEVMOS.svg?react"
+import LUNAIcon from "@/shared/assets/tokens/LUNA.svg?react"
+import RATOMIcon from "@/shared/assets/tokens/rATOM.svg?react"
+import STRDIcon from "@/shared/assets/tokens/STRD.svg?react"
+import EVMOSIcon from "@/shared/assets/tokens/EVMOS.svg?react"
+import IBCXIcon from "@/shared/assets/tokens/IBCX.svg?react"
+import IRISIcon from "@/shared/assets/tokens/IRIS.svg?react"
+import AMPLUNAIcon from "@/shared/assets/tokens/ampLUNA.svg?react"
+import KUJIIcon from "@/shared/assets/tokens/KUJI.svg?react"
+import STOSMOIcon from "@/shared/assets/tokens/stOSMO.svg?react"
+import USDCIcon from "@/shared/assets/tokens/USDC.svg?react"
+import AXLUSDCIcon from "@/shared/assets/tokens/axlUSDC.svg?react"
+import ATOMIcon from "@/shared/assets/tokens/ATOM.svg?react"
+import STATOMIcon from "@/shared/assets/tokens/stATOM.svg?react"
+import OSMOIcon from "@/shared/assets/tokens/OSMO.svg?react"
+import RSWTHIcon from "@/shared/assets/tokens/rSWTH.svg?react"
+import STLUNAIcon from "@/shared/assets/tokens/stLUNA.svg?react"
+import LSIIcon from "@/shared/assets/tokens/LSI.svg?react"
+import OKBIcon from "@/shared/assets/tokens/OKB.svg?react"
+import OKTIcon from "@/shared/assets/tokens/OKT.svg?react"
+import SWTHIcon from "@/shared/assets/tokens/SWTH.svg?react"
+import USCIcon from "@/shared/assets/tokens/USC.svg?react"
+import WBTCIcon from "@/shared/assets/tokens/WBTC.svg?react"
+import WSTETHIcon from "@/shared/assets/tokens/wstETH.svg?react"
+import YieldUSDIcon from "@/shared/assets/tokens/YieldUSD.svg?react"
+import ZILIcon from "@/shared/assets/tokens/ZIL.svg?react"
+
+export const iconMap: Record<string, JSX.Element> = {
+    BLUR: <BLURIcon className="size-8" />,
+    bNEO: <BNEOIcon className="size-8" />,
+    BUSD: <BUSDIcon className="size-8" />,
+    USD: <USDIcon className="size-8" />,
+    ETH: <ETHIcon className="size-8" />,
+    GMX: <GMXIcon className="size-8" />,
+    STEVMOS: <STEVMOSIcon className="size-8" />,
+    LUNA: <LUNAIcon className="size-8" />,
+    RATOM: <RATOMIcon className="size-8" />,
+    STRD: <STRDIcon className="size-8" />,
+    EVMOS: <EVMOSIcon className="size-8" />,
+    IBCX: <IBCXIcon className="size-8" />,
+    IRIS: <IRISIcon className="size-8" />,
+    ampLUNA: <AMPLUNAIcon className="size-8" />,
+    KUJI: <KUJIIcon className="size-8" />,
+    STOSMO: <STOSMOIcon className="size-8" />,
+    USDC: <USDCIcon className="size-8" />,
+    axlUSDC: <AXLUSDCIcon className="size-8" />,
+    ATOM: <ATOMIcon className="size-8" />,
+    STATOM: <STATOMIcon className="size-8" />,
+    OSMO: <OSMOIcon className="size-8" />,
+    rSWTH: <RSWTHIcon className="size-8" />,
+    STLUNA: <STLUNAIcon className="size-8" />,
+    LSI: <LSIIcon className="size-8" />,
+    OKB: <OKBIcon className="size-8" />,
+    OKT: <OKTIcon className="size-8" />,
+    SWTH: <SWTHIcon className="size-8" />,
+    USC: <USCIcon className="size-8" />,
+    WBTC: <WBTCIcon className="size-8" />,
+    wstETH: <WSTETHIcon className="size-8" />,
+    YieldUSD: <YieldUSDIcon className="size-8" />,
+    ZIL: <ZILIcon className="size-8" />,
+}

@@ -1,0 +1,9 @@
+{
+  "swap": "Swap",
+  "amount_to_send": "Amount to Send",
+  "amount_to_receive": "Amount to Receive",
+  "value": "Value",
+  "confirm_swap": "Confirm Swap",
+  "max": "Max",
+  "swap_success": "Swap successful!"
+}
