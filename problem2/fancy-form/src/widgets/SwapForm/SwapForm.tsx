@@ -30,7 +30,7 @@ const SwapForm = () => {
     const coins = useWalletStore(s => s.coins);
     const swapWallet = useWalletStore(s => s.swap);
 
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(FormSchema),
@@ -125,7 +125,7 @@ const SwapForm = () => {
             if (!symbol) return;
             const raw = coins?.[symbol] ?? "0";
             const value = Number(raw || 0).toFixed(2);
-            form.setError("amountToSend", { type: "manual", message: "Insufficient balance: " + value });
+            form.setError("amountToSend", { type: "manual", message: t('insufficient_balance', { amount: value }) });
             return;
         } else {
             form.clearErrors("amountToSend");
@@ -167,6 +167,13 @@ const SwapForm = () => {
             form.setValue("amountToSend", "0");
         }
     }, [amountToSend, form])
+
+    useEffect(() => {
+        if (errors.amountToSend?.type === "manual") {
+            const value = Number(coins?.[sendCoin] ?? 0).toFixed(2);
+            form.setError("amountToSend", { type: "manual", message: t("insufficient_balance", { amount: value }) });
+        }
+    }, [i18n.language, coins, sendCoin, form, t, errors.amountToSend?.type]);
 
     useEffect(() => {
         fetchPrices();

@@ -5,5 +5,6 @@
   "value": "Value",
   "confirm_swap": "Confirm Swap",
   "max": "Max",
-  "swap_success": "Swap successful!"
+  "swap_success": "Swap successful!",
+  "insufficient_balance": "Insufficient balance: {{amount}}"
 }

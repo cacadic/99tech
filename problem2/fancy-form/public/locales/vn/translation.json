@@ -5,5 +5,6 @@
   "value": "Giá Trị",
   "confirm_swap": "Xác Nhận Chuyển Đổi",
   "max": "Tối Đa",
-  "swap_success": "Chuyển Đổi Thành Công"
+  "swap_success": "Chuyển Đổi Thành Công",
+  "insufficient_balance": "Số dư không đủ: {{amount}}"
 }
