@@ -3,7 +3,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { cn } from "@/shared/lib/utils";
 import { Check, ChevronDown } from "lucide-react";
-import { cloneElement, useState } from "react";
+import { cloneElement, useEffect, useState } from "react";
 import { FormField, FormItem } from "@/shared/components/ui/form";
 import { useFormContext, type Path } from "react-hook-form";
 import type { FormSchemaData, FormValues } from "@/shared/schemas";
@@ -26,6 +26,14 @@ const CoinSelected = ({ name, isSend }: CoinSelectedProps) => {
 
     const walletList = _.filter(prices, (item) => _.has(coins, item.currency));
     const optionsList = isSend ? walletList : prices;
+
+    useEffect(() => {
+        const current = form.getValues(name) as string | undefined;
+        const hasCurrent = !!current && optionsList?.some(c => c.currency === current);
+        if (!hasCurrent && optionsList && optionsList.length > 0) {
+            form.setValue(name, optionsList[0].currency, { shouldValidate: true, shouldDirty: true });
+        }
+    }, [optionsList, form, name]);
 
     return (
         <FormField
@@ -68,9 +76,13 @@ const CoinSelected = ({ name, isSend }: CoinSelectedProps) => {
                                                     key={coin.currency}
                                                     value={coin.currency}
                                                     onSelect={(currentValue) => {
-                                                        form.setValue(field.name, currentValue === field.value ? "" : currentValue);
-                                                        form.setValue("amountToSend", "0");
-                                                        form.setValue("amountToReceive", "0");
+                                                        if (currentValue !== field.value) {
+                                                            form.setValue(field.name, currentValue, { shouldValidate: true, shouldDirty: true });
+                                                            form.setValue("amountToSend", "0");
+                                                            form.setValue("amountToReceive", "0");
+                                                            form.clearErrors(["amountToSend", "amountToReceive"]);
+                                                        }
+
                                                         setOpen(false);
                                                     }}
                                                     asChild
