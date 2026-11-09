@@ -1,3 +1,3 @@
-import { CustomFormFieldAsync as CustomFormField } from "./CustomFormField.async";
+import CustomFormField from "./CustomFormField";
 
 export { CustomFormField };

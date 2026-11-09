@@ -1,45 +1,78 @@
-import { FormControl, FormField, FormItem } from '@/shared/components/ui/form';
-import type { FormSchemaData, FormValues } from '@/shared/schemas';
-import CurrencyInput from 'react-currency-input-field';
-import { useFormContext, type Path } from 'react-hook-form';
+import type { ChangeEvent, Ref } from "react";
+import { cn } from "@/shared/lib/utils";
 
 interface CustomFormFieldProps {
-    name: Path<FormSchemaData>;
-    className?: string;
-    disabled?: boolean;
+  id: string;
+  /** Accessible name; the visible label is rendered by the parent. */
+  label: string;
+  value: string;
+  onChange?: (value: string) => void;
+  readOnly?: boolean;
+  invalid?: boolean;
+  /** `id` of the element that explains an error. */
+  describedBy?: string;
+  className?: string;
+  ref?: Ref<HTMLInputElement>;
 }
 
-const CustomFormField = ({ name, className, disabled }: CustomFormFieldProps) => {
-    const form = useFormContext<FormValues>();
+/** Longer numbers get a smaller font so a typical quote is never clipped on a phone. */
+const sizeFor = (length: number): string =>
+  length <= 7
+    ? "text-2xl"
+    : length <= 9
+      ? "text-xl"
+      : length <= 11
+        ? "text-lg"
+        : length <= 14
+          ? "text-base"
+          : "text-sm";
 
-    return (
-        <div className={className}>
-            <FormField
-                name={name}
-                control={form.control}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormControl>
-                            <CurrencyInput
-                                id={field.name}
-                                name={field.name}
-                                value={form.watch(name) ?? ""}
-                                decimalsLimit={2}
-                                className="flex w-full bg-transparent text-right text-2xl text-white ring-offset-background focus-visible:outline-none focus-visible:ring-0 light:text-blue-500"
-                                onValueChange={(val) => {
-                                    form.setValue(name, val ?? "", { shouldValidate: true });
-                                }}
-                                disabled={disabled}
-                                autoComplete='off'
-                                allowNegativeValue={false}
-                                maxLength={10}
-                            />
-                        </FormControl>
-                    </FormItem>
-                )}
-            />
-        </div>
-    );
+/**
+ * Amount input. It is a plain text field on purpose: whatever the user types is kept and judged by the domain
+ * validator, which shows a message for malformed input instead of silently swallowing keystrokes.
+ */
+const CustomFormField = ({
+  id,
+  label,
+  value,
+  onChange,
+  readOnly = false,
+  invalid = false,
+  describedBy,
+  className,
+  ref,
+}: CustomFormFieldProps) => {
+  const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    onChange?.(event.target.value);
+  };
+
+  return (
+    <input
+      ref={ref}
+      id={id}
+      name={id}
+      type="text"
+      inputMode="decimal"
+      autoComplete="off"
+      autoCapitalize="off"
+      spellCheck={false}
+      maxLength={32}
+      placeholder="0"
+      aria-label={label}
+      aria-invalid={invalid || undefined}
+      aria-describedby={describedBy}
+      value={value}
+      title={value === "" ? undefined : value}
+      readOnly={readOnly}
+      onChange={handleChange}
+      className={cn(
+        "min-w-0 flex-1 rounded-md bg-transparent px-1 text-right text-white outline-none placeholder:text-white/40 focus-visible:ring-[3px] focus-visible:ring-blue-base/70 light:text-blue-500 light:placeholder:text-blue-500/40",
+        sizeFor(value.length),
+        invalid && "text-red-300 light:text-red-600",
+        className,
+      )}
+    />
+  );
 };
 
 export default CustomFormField;

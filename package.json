@@ -1,0 +1,25 @@
+{
+  "name": "99tech-code-challenge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "99Tech code challenge: Problem 1 (sum to n), Problem 2 (Fancy Form currency swap demo), Problem 3 (messy React). Each problem is its own package; these scripts drive them from the repository root.",
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  },
+  "scripts": {
+    "setup": "npm --prefix problem1 ci && npm --prefix problem2/fancy-form ci && npm --prefix problem3 ci",
+    "dev": "npm --prefix problem2/fancy-form run dev",
+    "build": "npm --prefix problem2/fancy-form run build",
+    "preview": "npm --prefix problem2/fancy-form run preview",
+    "typecheck": "npm --prefix problem2/fancy-form run typecheck && npm --prefix problem3 run typecheck",
+    "lint": "npm --prefix problem2/fancy-form run lint",
+    "format:check": "npm --prefix problem2/fancy-form run format:check",
+    "test": "npm run test:problem1 && npm run test:problem2 && npm run test:problem3",
+    "test:problem1": "npm --prefix problem1 test",
+    "test:problem2": "npm --prefix problem2/fancy-form run test -- --run",
+    "test:problem3": "npm --prefix problem3 test -- --run",
+    "test:coverage": "npm --prefix problem2/fancy-form run test:coverage",
+    "test:e2e": "npm --prefix problem2/fancy-form run test:e2e",
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build && npm run test:e2e"
+  }
+}

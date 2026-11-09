@@ -1,0 +1,15 @@
+{
+  "name": "problem1",
+  "version": "1.0.0",
+  "private": true,
+  "description": "99Tech Code Challenge, Problem 1: three ways to sum to n.",
+  "type": "module",
+  "main": "problem1.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node problem1.js",
+    "test": "node --test"
+  }
+}

@@ -1,3 +1,3 @@
-import { CoinSelectedAsync as CoinSelected } from "./CoinSelected.async";
+import CoinSelected from "./CoinSelected";
 
 export { CoinSelected };
