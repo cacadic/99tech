@@ -54,7 +54,7 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.5 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -121,6 +121,8 @@
 
 @theme {
   --color-blue-base: #6791cd;
+  /* Text colour for labels on the dark blue blocks: blue-base itself is 4.49:1 there (AA needs 4.5). */
+  --color-blue-label: #6c96d2;
   --color-blue-200: #182a42;
   --color-blue-500: #112033;
 }

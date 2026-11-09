@@ -2,12 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <title>Fancy Form — Demo Swap</title>
+    <meta
+      name="description"
+      content="Fancy Form is a demo currency swap with simulated balances. Rates come from a public price feed, with a clearly labelled sample fallback. No real funds are involved."
+    />
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script src="/theme-init.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <noscript>
+      <p>Fancy Form needs JavaScript to run. Please enable JavaScript and reload the page.</p>
+    </noscript>
   </body>
 </html>

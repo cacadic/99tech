@@ -1,268 +1,239 @@
-import type { PriceData, PricesResponse } from "@/shared/constants";
-import { usePriceStore } from "@/shared/hooks/use-price-store";
-import { iconMap } from "@/shared/lib/iconMap";
-import { FormSchema, type FormValues } from "@/shared/schemas";
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
-import _ from "lodash";
-import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { AlertCircleIcon, Loader2Icon, RefreshCcwIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { Alert, AlertTitle } from "@/shared/components/ui/alert";
+import { Button } from "@/shared/components/ui/button";
+import {
+  createMockSwapBackend,
+  isFailureSimulated,
+  type SwapBackend,
+} from "@/shared/api/mockSwapBackend";
+import { usePriceStore } from "@/shared/hooks/use-price-store";
 import { CoinSelected } from "../CoinSelected";
 import { CustomFormField } from "../CustomFormField";
-import { AlertCircleIcon, Loader2Icon, RefreshCcwIcon } from "lucide-react";
-import { Button } from "@/shared/components/ui/button";
-import { Form } from "@/shared/components/ui/form";
-import { useWalletStore } from "@/shared/hooks/use-wallet-store";
-import { Alert, AlertTitle } from "@/shared/components/ui/alert";
 import { LoadingScreen } from "../LoadingScreen";
-import { toast } from 'sonner';
+import { PriceStatus } from "./PriceStatus";
+import { useSwapForm } from "./useSwapForm";
 
-const FETCH_URL = "https://interview.switcheo.com/prices.json";
+function FieldError({ id, children }: { id: string; children: ReactNode }) {
+  return (
+    <Alert id={id} variant="destructive" className="!gap-x-1.5 bg-red-600 py-2 [&>svg]:!text-white">
+      <AlertCircleIcon aria-hidden="true" />
+      <AlertTitle className="line-clamp-none whitespace-normal text-white">{children}</AlertTitle>
+    </Alert>
+  );
+}
 
-const SwapForm = () => {
-    const [isSwapping, setIsSwapping] = useState(false);
-    const [isCannotFetch, setIsCannotFetch] = useState(false);
-    const [isFetching, setIsFetching] = useState(false);
+const blockClass =
+  "flex w-full flex-col items-center justify-between gap-y-1.5 rounded-md border-0 bg-blue-200 p-3 light:bg-blue-100 sm:p-4";
 
-    const { setPrices } = usePriceStore();
-    const prices = usePriceStore(s => s.prices);
-    const coins = useWalletStore(s => s.coins);
-    const swapWallet = useWalletStore(s => s.swap);
+function SwapCard({ backend: injected }: { backend?: SwapBackend }) {
+  const { t } = useTranslation();
+  const failureSimulated = isFailureSimulated(window.location.search);
+  const defaultBackend = useMemo(
+    () => createMockSwapBackend({ alwaysFail: failureSimulated }),
+    [failureSimulated],
+  );
+  const amountRef = useRef<HTMLInputElement>(null);
+  const form = useSwapForm(injected ?? defaultBackend, amountRef);
 
-    const { t, i18n } = useTranslation();
+  const source = usePriceStore((s) => s.source);
+  const asOf = usePriceStore((s) => s.asOf);
+  const failure = usePriceStore((s) => s.failure);
+  const loading = usePriceStore((s) => s.status === "loading");
+  const load = usePriceStore((s) => s.load);
 
-    const form = useForm<FormValues>({
-        resolver: zodResolver(FormSchema),
-        defaultValues: {
-            amountToSend: "0",
-            amountToReceive: "0",
-            sendCoin: "",
-            receiveCoin: "",
-        },
-    });
+  const onSubmit = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    void form.submit();
+  };
 
-    const errors = form.formState.errors;
+  return (
+    <form onSubmit={onSubmit} noValidate aria-labelledby="swap-title" className="w-full px-4">
+      <div className="mx-auto flex w-full max-w-[400px] flex-col rounded-md bg-blue-500 px-4 pb-6 pt-7 sm:px-6 transition-all light:border light:border-accent light:bg-white light:shadow-md">
+        <h1 id="swap-title" className="text-xl font-bold text-white light:text-blue-500">
+          {t("swap")}
+        </h1>
 
-    const amountToSend = form.watch("amountToSend");
-    const amountToReceive = form.watch("amountToReceive");
+        <div className="mt-4">
+          <div className={blockClass}>
+            <div className="flex w-full items-center justify-between">
+              <label
+                htmlFor="amountToSend"
+                className="text-base text-blue-label light:text-blue-500"
+              >
+                {t("amount_to_send")}
+              </label>
+              <button
+                type="button"
+                onClick={form.max}
+                disabled={form.submitting}
+                className="cursor-pointer select-none rounded px-1 text-base text-blue-label outline-none transition-all hover:text-white focus-visible:ring-[3px] focus-visible:ring-blue-base/70 active:text-blue-label light:text-blue-500 light:hover:text-blue-200 light:active:text-blue-base"
+              >
+                {t("max")}
+              </button>
+            </div>
+            <div className="flex w-full items-center justify-between gap-2">
+              <CoinSelected
+                id="sendCoin"
+                label={t("token_to_send")}
+                value={form.from}
+                onChange={form.setFrom}
+                options={form.options}
+                balances={form.balances}
+                requireBalance
+                disabled={form.submitting}
+                describedBy={form.fromMessage === null ? undefined : "from-error"}
+                invalid={form.fromMessage !== null}
+              />
+              <CustomFormField
+                ref={amountRef}
+                id="amountToSend"
+                label={t("amount_to_send")}
+                value={form.amountText}
+                onChange={form.setAmountText}
+                readOnly={form.submitting}
+                invalid={form.amountMessage !== null}
+                describedBy={form.amountMessage === null ? undefined : "send-error"}
+              />
+            </div>
+            <div className="flex w-full items-center justify-between">
+              <p className="text-base text-slate-300 light:text-slate-700">{t("value")}</p>
+              <p className="text-base text-slate-300 light:text-slate-700" data-testid="send-usd">
+                {form.sendUsd}
+              </p>
+            </div>
+            {form.balanceText !== null && (
+              <p
+                className="w-full text-left text-sm text-slate-300 light:text-slate-700"
+                data-testid="send-balance"
+              >
+                {t("balance", { amount: form.balanceText })}
+              </p>
+            )}
+            {form.fromMessage !== null && (
+              <FieldError id="from-error">{form.fromMessage}</FieldError>
+            )}
+            {form.amountMessage !== null && (
+              <FieldError id="send-error">{form.amountMessage}</FieldError>
+            )}
+          </div>
 
-    const fetchPrices = async () => {
-        try {
-            setIsFetching(true);
-            const { data } = await axios.get<PriceData[]>(FETCH_URL)
+          <div className="relative h-4">
+            <Button
+              size="icon"
+              aria-label={t("switch_direction")}
+              onClick={form.flip}
+              disabled={form.submitting}
+              className="absolute left-1/2 top-1/2 inline-flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border bg-gray-900 shadow-none transition-all hover:bg-blue-200 focus:outline-none active:bg-blue-500 light:border-0 light:bg-blue-base light:shadow-md light:hover:bg-blue-500 light:active:bg-blue-base"
+            >
+              <RefreshCcwIcon className="text-white" aria-hidden="true" />
+            </Button>
+          </div>
 
-            const dataWithIcons: PricesResponse = _(data)
-                .groupBy("currency")
-                .map((items) => _.maxBy(items, "price"))
-                .compact()
-                .map((item) => ({
-                    ...item!,
-                    icon: iconMap[item!.currency] ?? <span className="size-8">?</span>,
-                }))
-                .value()
+          <div className={blockClass}>
+            <div className="flex w-full items-center justify-between">
+              <label
+                htmlFor="amountToReceive"
+                className="text-base text-blue-label light:text-blue-500"
+              >
+                {t("amount_to_receive")}
+              </label>
+            </div>
+            <div className="flex w-full items-center justify-between gap-2">
+              <CoinSelected
+                id="receiveCoin"
+                label={t("token_to_receive")}
+                value={form.to}
+                onChange={form.setTo}
+                options={form.options}
+                balances={form.balances}
+                disabled={form.submitting}
+                invalid={form.toMessage !== null}
+                describedBy={form.toMessage === null ? undefined : "receive-error"}
+              />
+              <CustomFormField
+                id="amountToReceive"
+                label={t("amount_to_receive")}
+                value={form.receiveText}
+                readOnly
+              />
+            </div>
+            <div className="flex w-full items-center justify-between">
+              <p className="text-base text-slate-300 light:text-slate-700">{t("value")}</p>
+              <p
+                className="text-base text-slate-300 light:text-slate-700"
+                data-testid="receive-usd"
+              >
+                {form.receiveUsd}
+              </p>
+            </div>
+            {form.toMessage !== null && (
+              <FieldError id="receive-error">{form.toMessage}</FieldError>
+            )}
+          </div>
 
-            setPrices(dataWithIcons)
-            const usd = dataWithIcons?.find(p => p.currency === "USD");
+          <p
+            aria-live="polite"
+            data-testid="rate"
+            className="mt-3 min-h-5 text-center text-sm text-slate-300 light:text-slate-700"
+          >
+            {form.rateText}
+          </p>
+        </div>
 
-            form.setValue("sendCoin", usd?.currency || "")
-            form.setValue("receiveCoin", dataWithIcons[1]?.currency || "")
-            setIsCannotFetch(false);
-        } catch (err) {
-            console.error("Error fetching data:", err)
-            setIsCannotFetch(true);
-        } finally {
-            setIsFetching(false);
-        }
-    }
+        <Button
+          type="submit"
+          variant="destructive"
+          // While pending the button stays focusable (aria-disabled) so keyboard and screen-reader users do not
+          // lose their place; extra clicks / Enter presses are ignored by the submit guard.
+          disabled={!form.canSubmit && !form.submitting}
+          aria-disabled={form.submitting || undefined}
+          aria-busy={form.submitting}
+          className="mt-3 aria-disabled:cursor-wait aria-disabled:opacity-70 border border-transparent bg-blue-base hover:border-blue-base hover:bg-blue-200 active:bg-blue-500 disabled:cursor-not-allowed disabled:!pointer-events-auto disabled:hover:bg-blue-base light:bg-blue-500 light:hover:bg-blue-base light:active:bg-blue-200 light:disabled:bg-blue-base"
+        >
+          {form.submitting && <Loader2Icon className="animate-spin" aria-hidden="true" />}
+          <span className="text-md">{form.submitting ? t("swapping") : t("confirm_swap")}</span>
+        </Button>
+        {form.formMessage !== null && <FieldError id="form-error">{form.formMessage}</FieldError>}
 
-    const sendCoin = form.watch("sendCoin");
-    const receiveCoin = form.watch("receiveCoin");
+        <PriceStatus
+          source={source}
+          asOf={asOf}
+          failure={failure}
+          loading={loading}
+          locked={form.submitting}
+          onRetry={() => {
+            void load();
+          }}
+        />
+        <p className="mt-3 text-center text-xs text-slate-300 light:text-slate-700">
+          {failureSimulated ? t("demo_failure_mode") : t("demo_notice")}
+        </p>
+      </div>
+    </form>
+  );
+}
 
-    const sendCoinValue = useCallback(() => {
-        const basePrice = prices.find(coin => coin.currency === sendCoin)?.price || 0;
-        const value = Math.floor(basePrice * Number(amountToSend) * 100) / 100;
-        return "$" + value;
-    }, [prices, sendCoin, amountToSend]);
+interface SwapFormProps {
+  /** Replaces the simulated server (tests only; the app always uses the default). */
+  backend?: SwapBackend;
+}
 
-    const receiveCoinValue = useCallback(() => {
-        const basePrice = prices.find(coin => coin.currency === receiveCoin)?.price || 0;
-        const value = Math.floor(basePrice * Number(amountToReceive) * 100) / 100;
-        return "$" + value;
-    }, [prices, receiveCoin, amountToReceive]);
+const SwapForm = ({ backend }: SwapFormProps) => {
+  const book = usePriceStore((s) => s.book);
+  const load = usePriceStore((s) => s.load);
+  const cancel = usePriceStore((s) => s.cancel);
 
-    const handleSwitchField = () => {
-        const currentSendCoin = form.getValues("sendCoin")
-        const currentReceiveCoin = form.getValues("receiveCoin")
+  useEffect(() => {
+    void load();
+    // Cancelling on cleanup makes React Strict Mode's mount → unmount → mount issue exactly one live request.
+    return cancel;
+  }, [load, cancel]);
 
-        form.setValue("sendCoin", currentReceiveCoin)
-        form.setValue("receiveCoin", currentSendCoin)
-
-        form.setValue("amountToSend", "0")
-        form.setValue("amountToReceive", "0")
-    }
-
-    const onMax = () => {
-        const symbol = form.getValues("sendCoin");
-        if (!symbol) return;
-        const raw = coins?.[symbol] ?? "0";
-        const value = Number(raw || 0).toFixed(2);
-        form.setValue("amountToSend", value, { shouldValidate: true, shouldDirty: true });
-    };
-
-    const onSubmit = (values: FormValues) => {
-        const sendPrice = prices.find(p => p.currency === values.sendCoin)?.price || 0;
-        const receivePrice = prices.find(p => p.currency === values.receiveCoin)?.price || 0;
-
-        if (!values.sendCoin || !values.receiveCoin) return;
-        if (Number(values.amountToSend) <= 0) return;
-        if (sendPrice <= 0 || receivePrice <= 0) return;
-
-        const balance = Number(coins?.[values.sendCoin] ?? 0);
-        const amountNum = Number(values.amountToSend);
-        if (amountNum > balance) {
-            const symbol = form.getValues("sendCoin");
-            if (!symbol) return;
-            const raw = coins?.[symbol] ?? "0";
-            const value = Number(raw || 0).toFixed(2);
-            form.setError("amountToSend", { type: "manual", message: t('insufficient_balance', { amount: value }) });
-            return;
-        } else {
-            form.clearErrors("amountToSend");
-        }
-
-        setIsSwapping(true);
-
-        setTimeout(() => {
-            swapWallet(values.sendCoin, values.receiveCoin, Number(values.amountToSend), sendPrice, receivePrice);
-
-            form.reset({
-                sendCoin: sendCoin,
-                receiveCoin: receiveCoin,
-                amountToSend: "0",
-                amountToReceive: "0",
-            });
-
-            setIsSwapping(false);
-            toast.success(t('swap_success'));
-        }, 500);
-    };
-
-    useEffect(() => {
-        const sendPrice = prices.find(p => p.currency === sendCoin)?.price || 0
-        const receivePrice = prices.find(p => p.currency === receiveCoin)?.price || 0
-        const amount = Number(amountToSend)
-
-        if (sendPrice > 0 && receivePrice > 0 && amount > 0) {
-            const amountReceive = (amount * sendPrice) / receivePrice
-            const rounded = Math.floor(amountReceive * 100) / 100
-            form.setValue("amountToReceive", rounded.toString())
-        } else {
-            form.setValue("amountToReceive", "0")
-        }
-    }, [amountToSend, sendCoin, receiveCoin, prices, form])
-
-    useEffect(() => {
-        if (amountToSend.length === 0) {
-            form.setValue("amountToSend", "0");
-        }
-    }, [amountToSend, form])
-
-    useEffect(() => {
-        if (errors.amountToSend?.type === "manual") {
-            const value = Number(coins?.[sendCoin] ?? 0).toFixed(2);
-            form.setError("amountToSend", { type: "manual", message: t("insufficient_balance", { amount: value }) });
-        }
-    }, [i18n.language, coins, sendCoin, form, t, errors.amountToSend?.type]);
-
-    useEffect(() => {
-        fetchPrices();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-
-    if (isFetching) {
-        return (
-            <LoadingScreen />
-        )
-    }
-
-    if (isCannotFetch) {
-        return (
-            <section className="bg-white dark:bg-gray-900 w-full">
-                <div className="py-8 px-4 mx-auto max-w-screen-xl lg:py-16 lg:px-6">
-                    <div className="mx-auto max-w-screen-sm text-center">
-                        <h1 className="mb-4 text-7xl tracking-tight font-extrabold lg:text-9xl text-primary-600 dark:text-primary-500 light:text-white">500</h1>
-                        <p className="mb-4 text-3xl tracking-tight font-bold text-gray-900 md:text-4xl dark:text-white">Internal Server Error.</p>
-                        <p className="mb-4 text-lg font-light text-gray-500 dark:text-gray-400">We are already working to solve the problem. </p>
-                    </div>
-                </div>
-            </section>
-        )
-    }
-
-    return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
-                <div className="flex flex-col bg-blue-500 light:bg-white light:border-[1px] light:border-accent light:shadow-md px-6 pb-8 pt-7 rounded-md mx-auto max-w-[400px] w-full transition-all">
-                    <h1 className="text-xl font-bold text-white light:text-blue-500">{t('swap')}</h1>
-                    <div className="relative mt-4">
-                        <div className="w-full mx-auto bg-blue-200 light:light:bg-blue-100 border-blue-200 light:border-blue-200 rounded-md flex flex-col justify-between items-center p-4  gap-y-1.5">
-                            <div className="flex justify-between items-center w-full">
-                                <p className="text-base text-blue-base light:text-blue-200">{t('amount_to_send')}</p>
-                                <p className="text-base text-blue-base cursor-pointer hover:text-white transition-all select-none active:text-blue-base light:text-blue-500 light:hover:text-blue-200 light:active:text-blue-base" onClick={onMax}>
-                                    {t('max')}
-                                </p>
-                            </div>
-                            <div className="flex justify-between items-center w-full">
-                                <CoinSelected name="sendCoin" isSend />
-                                <CustomFormField name="amountToSend" />
-                            </div>
-                            <div className="flex justify-between items-center w-full">
-                                <p className="text-base text-gray-400 light:text-blue-base">{t('value')}</p>
-                                <p className="text-base text-gray-400">{sendCoinValue()}</p>
-                            </div>
-                        </div>
-
-                        <div className="w-full mx-auto bg-blue-200 light:bg-blue-100 border-blue-200 border-0 rounded-md flex flex-col justify-between items-center p-4 mt-4 gap-y-1.5">
-                            <div className="flex justify-between items-center w-full">
-                                <p className="text-base text-blue-base light:text-blue-200">{t('amount_to_receive')}</p>
-                            </div>
-                            <div className="flex justify-between items-center w-full">
-                                <CoinSelected name="receiveCoin" />
-                                <CustomFormField name="amountToReceive" disabled />
-                            </div>
-                            <div className="flex justify-between items-center w-full">
-                                <p className="text-base text-gray-400 light:text-blue-base">{t('value')}</p>
-                                <p className="text-base text-gray-400">{receiveCoinValue()}</p>
-                            </div>
-                        </div>
-                        {coins?.[receiveCoin] && form.getValues("sendCoin") !== form.getValues("receiveCoin") && (
-                            <Button
-                                size="icon"
-                                className="inline-flex size-10 items-center justify-center rounded-full bg-gray-900 transition-all hover:bg-blue-200 focus:outline-none absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 active:bg-blue-500 light:bg-blue-base light:border-blue-200 light:border-0 border-[1px] light:active:bg-blue-base light:shadow-md"
-                                onClick={handleSwitchField}
-                            >
-                                <RefreshCcwIcon className="text-white hover:text-blue-200" />
-                            </Button>
-                        )}
-                    </div>
-                    <Button type="submit" variant="destructive"
-                        className="mt-4 bg-blue-base hover:bg-blue-200 hover:border-blue-base active:bg-blue-500 border-[1px] border-transparent disabled:cursor-not-allowed disabled:!pointer-events-auto disabled:hover:bg-blue-base light:disabled:bg-blue-base light:bg-blue-500 light:hover:bg-blue-base light:active:bg-blue-200"
-                        disabled={isSwapping || !form.formState.isValid || form.getValues("sendCoin") === form.getValues("receiveCoin") || Number(form.getValues("amountToSend")) <= 0}>
-                        {isSwapping && <Loader2Icon className="animate-spin" />}
-                        <span className="text-md">{t('confirm_swap')}</span>
-                    </Button>
-
-                    {errors?.amountToSend && (
-                        <Alert variant="destructive" className="mt-4 bg-red-500 py-2.5 [&>svg]:!text-white !gap-x-1.5">
-                            <AlertCircleIcon />
-                            <AlertTitle className="text-white">{errors.amountToSend?.message}</AlertTitle>
-                        </Alert>
-                    )}
-                </div>
-            </form>
-        </Form>
-    );
+  // First load only: afterwards `book` stays set (live, or the labelled sample fallback) and the form is shown.
+  if (book === null) return <LoadingScreen />;
+  return <SwapCard backend={backend} />;
 };
 
 export default SwapForm;
